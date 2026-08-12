@@ -1,9 +1,11 @@
 ---
 name: Vaultwarden
-version: 2026.08.05
+version: 2026.08.06
 slug: bitwarden-cfm
-description: Open source password management solution
-url: https://github.com/hassio-addons/app-vaultwarden
+description: Open source gestor contraseñas
+url: https://github.com/carferrer/vaultwarden-cfm
+image: "ghcr.io/carferrer/uptime-kuma-cfm"
+image_tag: "latest"
 webui: "[PROTO:ssl]://[HOST]:[PORT:7277]"
 init: false
 arch:
