@@ -1,7 +1,7 @@
 ---
 name: Vaultwarden
 version: dev
-slug: bitwarden
+slug: bitwarden-cfm
 description: Open source password management solution
 url: https://github.com/hassio-addons/app-vaultwarden
 webui: "[PROTO:ssl]://[HOST]:[PORT:7277]"
