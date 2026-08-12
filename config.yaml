@@ -4,7 +4,7 @@ version: 2026.08.06
 slug: bitwarden-cfm
 description: Open source gestor contraseñas
 url: https://github.com/carferrer/vaultwarden-cfm
-image: "ghcr.io/carferrer/uptime-kuma-cfm"
+image: "ghcr.io/carferrer/vaultwarden-cfm"
 image_tag: "latest"
 webui: "[PROTO:ssl]://[HOST]:[PORT:7277]"
 init: false
