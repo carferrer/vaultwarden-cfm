@@ -1,3 +1,4 @@
+#para poder lanzar la accion renovate de forma manual
 name: Renovate Bot
 on:
   # Te permite ejecutarlo manualmente desde la pestaña Actions
