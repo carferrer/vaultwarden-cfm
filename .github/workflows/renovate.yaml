@@ -1,12 +1,15 @@
-#para poder lanzar la accion renovate de forma manual
 name: Renovate Bot
 on:
   # Te permite ejecutarlo manualmente desde la pestaña Actions
   workflow_dispatch: 
-  
+
   schedule:
     # Se ejecuta todas las noches a las 2:00 AM UTC
     - cron: '0 2 * * *'
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
 
 jobs:
   renovate:
@@ -19,4 +22,6 @@ jobs:
         uses: renovatebot/github-action@v46.2.2  # Usa siempre la última versión disponible
         with:
           configurationFile: .github/renovate.json
-          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
