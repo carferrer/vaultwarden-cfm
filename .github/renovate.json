@@ -40,7 +40,7 @@
   "packageRules": [
     {
       "matchDatasources": ["repology"],
-      "automerge": true
+      "automerge": false
     },
     {
       "groupName": "App base image",
@@ -52,13 +52,13 @@
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["minor", "patch"],
       "matchDepNames": ["ghcr.io/hassio-addons/debian-base"],
-      "automerge": true
+      "automerge": false
     },
     {
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["minor", "patch"],
       "matchDepNames": ["vaultwarden/server"],
-      "automerge": true
+      "automerge": false
     }
   ]
 }
