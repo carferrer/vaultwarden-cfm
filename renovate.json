@@ -1,0 +1,70 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "rebaseWhen": "behind-base-branch",
+  "timezone": "Europe/Madrid",
+  "dependencyDashboard": true,
+  "labels": [
+    "dependencies"
+  ],
+  "commitMessagePrefix": "⬆️",
+  "commitMessageTopic": "{{depName}}",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Home Assistant Debian base image",
+      "managerFilePatterns": [
+        "/^Dockerfile$/",
+        "/^build\\.yaml$/"
+      ],
+      "matchStringsStrategy": "any",
+      "matchStrings": [
+        "ARG BUILD_FROM=(?<depName>.*?):(?<currentValue>.*?)\\s+",
+        "(aarch64|amd64):\\s[\"']?(?<depName>.*?):(?<currentValue>.*?)[\"']?\\s"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Debian packages",
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
+      "matchStringsStrategy": "any",
+      "matchStrings": [
+        "\\s\\s(?<package>[a-z0-9][a-z0-9-]+)=(?<currentValue>[a-z0-9-:_+~.]+)\\s+"
+      ],
+      "versioningTemplate": "deb",
+      "datasourceTemplate": "deb",
+      "depNameTemplate": "{{{package}}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Vaultwarden server image",
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
+      "matchStringsStrategy": "any",
+      "matchStrings": [
+        "FROM [\"']?vaultwarden/server:(?<currentValue>.*?)[\"']?\\s+"
+      ],
+      "depNameTemplate": "vaultwarden/server",
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": [
+        "deb"
+      ],
+      "registryUrls": [
+        "https://deb.debian.org/debian?suite=trixie&components=main&binaryArch=amd64",
+        "https://deb.debian.org/debian?suite=trixie-updates&components=main&binaryArch=amd64",
+        "https://deb.debian.org/debian-security?suite=trixie-security&components=main&binaryArch=amd64"
+      ]
+    }
+  ]
+}
