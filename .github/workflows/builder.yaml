@@ -4,10 +4,17 @@ name: Build
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión a compilar (por ejemplo: 2026.09.02)"
+        required: true
+        type: string
 
 env:
   ARCHITECTURES: '["amd64", "aarch64"]'
   IMAGE_NAME: vaultwarden-cfm
+  VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.release.tag_name }}
 
 permissions:
   contents: read
@@ -49,10 +56,10 @@ jobs:
           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
           image: ${{ matrix.image }}
           image-tags: |
-            ${{ github.event.release.tag_name }}
+            ${{ env.VERSION }}
             latest
           push: "true"
-          version: ${{ github.event.release.tag_name }}
+          version: ${{ env.VERSION }}
 
   manifest:
     name: Publish multi-arch manifest
@@ -69,5 +76,5 @@ jobs:
           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
           image-name: ${{ env.IMAGE_NAME }}
           image-tags: |
-            ${{ github.event.release.tag_name }}
+            ${{ env.VERSION }}
             latest

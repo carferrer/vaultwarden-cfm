@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   publish-release:
@@ -98,3 +99,13 @@ jobs:
             --target "$TARGET" \
             --title "$VERSION" \
             --notes-file release-notes.md
+
+      - name: Lanzar build de imágenes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.vars.outputs.version }}
+        shell: bash
+        run: |
+          gh workflow run builder.yaml \
+            --ref main \
+            -f version="$VERSION"
