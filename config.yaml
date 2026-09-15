@@ -1,6 +1,6 @@
 ---
 name: Vaultwarden
-version: 2026.08.07
+version: 2026.08.08
 slug: bitwarden-cfm
 description: Open source gestor contraseñas
 url: https://github.com/carferrer/vaultwarden-cfm
