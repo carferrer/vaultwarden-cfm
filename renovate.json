@@ -64,7 +64,9 @@
         "https://deb.debian.org/debian?suite=trixie&components=main&binaryArch=amd64",
         "https://deb.debian.org/debian?suite=trixie-updates&components=main&binaryArch=amd64",
         "https://deb.debian.org/debian-security?suite=trixie-security&components=main&binaryArch=amd64"
-      ]
+      ],
+      "groupName": "Debian packages",
+      "groupSlug": "debian-packages"
     }
   ]
 }
