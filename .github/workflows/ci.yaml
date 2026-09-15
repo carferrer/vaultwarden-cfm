@@ -8,6 +8,11 @@ on:
       - opened
       - reopened
       - synchronize
+    paths:
+      - Dockerfile
+      - build.yaml
+      - rootfs/**
+      - .github/workflows/ci.yaml
   workflow_dispatch:
 
 permissions:
