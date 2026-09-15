@@ -39,6 +39,28 @@ jobs:
             exit 1
           fi
 
+      - name: Generar notas automáticamente
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          VERSION="${{ inputs.version }}"
+
+          gh api \
+            --method POST \
+            "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="$VERSION" \
+            -f target_commitish="main" \
+            --jq '.body' > release_notes.md
+
+          if [ ! -s release_notes.md ]; then
+            echo "GitHub no ha generado notas para esta versión"
+            exit 1
+          fi
+
+          echo "Notas generadas:"
+          cat release_notes.md
+
       - name: Actualizar config.yaml y CHANGELOG.md
         shell: bash
         run: |
@@ -69,12 +91,12 @@ jobs:
           {
             echo "# Versión $VERSION ($FECHA)"
             echo
-            echo "<!-- Añadir aquí las notas de esta versión antes de hacer merge -->"
+            cat release_notes.md
             echo
             cat old_changelog.txt
           } > CHANGELOG.md
 
-          rm old_changelog.txt
+          rm old_changelog.txt release_notes.md
 
       - name: Crear rama y commit
         shell: bash
@@ -102,4 +124,4 @@ jobs:
             --base main \
             --head "$BRANCH" \
             --title "chore: preparar release $VERSION" \
-            --body $'Prepara la release **'"$VERSION"$'**.\n\n- Actualiza `config.yaml`.\n- Añade la nueva sección al inicio de `CHANGELOG.md`.\n\nAntes de hacer merge, sustituye el comentario de `CHANGELOG.md` por las notas definitivas de la versión. Después del merge ya se puede publicar la release.'
+            --body $'Prepara la release **'"$VERSION"$'**.\n\n- Actualiza `config.yaml`.\n- Genera automáticamente las notas de la versión con GitHub y las añade al inicio de `CHANGELOG.md`.\n\nRevisa las notas antes de hacer merge. Después del merge ya se puede publicar la release.'
