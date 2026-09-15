@@ -17,5 +17,5 @@ under attack every day. Security breaches occur and your passwords are stolen.
 When you reuse the same passwords everywhere hackers can easily access your
 email, bank, and other important accounts. USE A PASSWORD MANAGER!
 
-Version: 1.37.1
+Version: 1.37.3
 
