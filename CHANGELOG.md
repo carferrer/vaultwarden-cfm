@@ -1,3 +1,14 @@
+# Versión 2026.10.01 (2026-10-08)
+
+## What's Changed
+* ci: trigger Docker build after publishing release by @carferrer in https://github.com/carferrer/vaultwarden-cfm/pull/22
+* Update nginx version in Dockerfile by @carferrer in https://github.com/carferrer/vaultwarden-cfm/pull/25
+* ⬆️ Update vaultwarden/server Docker tag to v1.37.4 by @renovate[bot] in https://github.com/carferrer/vaultwarden-cfm/pull/24
+* ⬆️ Update ghcr.io/hassio-addons/debian-base Docker tag to v9.5.0 by @renovate[bot] in https://github.com/carferrer/vaultwarden-cfm/pull/23
+
+
+**Full Changelog**: https://github.com/carferrer/vaultwarden-cfm/compare/2026.09.02...2026.10.01
+
 # Versión 2026.09.02 (2026-09-15)
 
 ## What's Changed
