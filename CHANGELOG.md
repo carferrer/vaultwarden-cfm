@@ -1,3 +1,13 @@
+# Versión 2026.10.02 (2026-10-28)
+
+## What's Changed
+* Update README.md by @carferrer in https://github.com/carferrer/vaultwarden-cfm/pull/27
+* ⬆️ Update ghcr.io/hassio-addons/debian-base Docker tag to v9.5.1 by @renovate[bot] in https://github.com/carferrer/vaultwarden-cfm/pull/28
+* Update nginx version in Dockerfile by @carferrer in https://github.com/carferrer/vaultwarden-cfm/pull/29
+
+
+**Full Changelog**: https://github.com/carferrer/vaultwarden-cfm/compare/2026.10.01...2026.10.02
+
 # Versión 2026.10.01 (2026-10-08)
 
 ## What's Changed
