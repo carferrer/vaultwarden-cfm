@@ -1,3 +1,11 @@
+# Versión 2026.11.01 (2026-11-02)
+
+## What's Changed
+* ⬆️ Update vaultwarden/server Docker tag to v1.37.5 by @renovate[bot] in https://github.com/carferrer/vaultwarden-cfm/pull/31
+
+
+**Full Changelog**: https://github.com/carferrer/vaultwarden-cfm/compare/2026.10.02...2026.11.01
+
 # Versión 2026.10.02 (2026-10-28)
 
 ## What's Changed
