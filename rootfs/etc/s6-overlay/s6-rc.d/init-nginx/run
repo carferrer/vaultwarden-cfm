@@ -1,20 +1,20 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 # ==============================================================================
-# Home Assistant Community App: Vaultwarden
-# This file configures NGINX
+# Complemento de Home Assistant: Vaultwarden
+# Este archivo configura Nginx
 # ==============================================================================
 declare certfile
 declare keyfile
 
 bashio::config.require.ssl
 
-# Preserve the dynamic ban map across restarts. Fail2ban will maintain it.
+# Conservar la lista dinámica de IP sancionadas tras reiniciar. Fail2ban la mantendrá actualizada.
 mkdir -p /data/fail2ban
 if [[ ! -f /data/fail2ban/banned.map ]]; then
     install -m 600 /dev/null /data/fail2ban/banned.map
 fi
-# When the feature is switched off, immediately discard any stale bans.
+# Al desactivar la protección, eliminar los bloqueos anteriores.
 if ! bashio::config.true 'fail2ban_enabled'; then
     : > /data/fail2ban/banned.map
 fi
