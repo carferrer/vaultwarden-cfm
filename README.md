@@ -12,7 +12,7 @@ El robo de contraseñas es un riesgo importante. Reutilizar una misma contraseñ
 
 ## Protección opcional con Fail2ban (experimental)
 
-El complemento puede detectar intentos reiterados de inicio de sesión con contraseñas incorrectas en los registros de Vaultwarden y bloquear temporalmente la IP de origen mediante el Nginx incluido. No necesita conceder `NET_ADMIN` al contenedor de Home Assistant ni modificar el cortafuegos del anfitrión.
+El complemento puede detectar intentos reiterados de inicio de sesión con contraseñas incorrectas en los registros de Vaultwarden y bloquear de forma permanente la IP de origen mediante el Nginx incluido. No necesita conceder `NET_ADMIN` al contenedor de Home Assistant ni modificar el cortafuegos del anfitrión.
 
 **Esta funcionalidad está desactivada por defecto y todavía requiere pruebas antes de utilizarse en producción.**
 
@@ -20,17 +20,17 @@ El complemento puede detectar intentos reiterados de inicio de sesión con contr
 
 ```yaml
 fail2ban_enabled: false
-fail2ban_maxretry: 5
+fail2ban_maxretry: 10
 fail2ban_findtime: 600
-fail2ban_bantime: 3600
+fail2ban_bantime: -1
 ```
 
 - `fail2ban_enabled`: activa o desactiva la protección.
 - `fail2ban_maxretry`: número máximo de intentos fallidos.
 - `fail2ban_findtime`: período de detección, en segundos.
-- `fail2ban_bantime`: duración de la sanción, en segundos.
+- `fail2ban_bantime`: duración de la sanción, en segundos. El valor `-1` establece bloqueos permanentes, que solo se eliminan con un desbloqueo manual.
 
-La configuración predeterminada prevé **5 intentos fallidos en 10 minutos**, seguidos de **1 hora de bloqueo**.
+La configuración predeterminada prevé **10 intentos fallidos desde una misma IP en 10 minutos**, seguidos de un **bloqueo permanente hasta que se desbloquee manualmente**. El bloqueo afecta a cualquier usuario que comparta esa IP pública. La protección sigue desactivada por defecto mientras no se hayan validado las pruebas.
 
 ### Requisitos de red
 
@@ -42,21 +42,34 @@ Nginx obtiene la IP del cliente mediante `$remote_addr`. Si se añade un proxy i
 
 Cuando se activa, Vaultwarden escribe los errores de autenticación en `/data/fail2ban/vaultwarden.log`. Fail2ban examina ese registro mediante su filtro y mantiene las IP sancionadas en `/data/fail2ban/banned.map`.
 
-Nginx consulta la lista de bloqueo y devuelve una respuesta **HTTP 403** a las IP sancionadas. La base de datos de estado de Fail2ban se almacena en `/data/fail2ban`.
+Nginx consulta la lista de bloqueo y devuelve una respuesta **HTTP 403** a las IP sancionadas. La base de datos de estado de Fail2ban se almacena en `/data/fail2ban/fail2ban.sqlite3` mediante su configuración global. Esto permite restaurar las sanciones permanentes después de reiniciar el complemento o Home Assistant. Se debe comprobar este comportamiento durante las pruebas.
 
 ### Verificaciones obligatorias antes de desplegar
 
 1. Comprobar que la imagen compila para **amd64 y aarch64** y que los servicios arrancan correctamente con S6.
 2. Con Fail2ban desactivado, verificar que el acceso HTTPS y el inicio de sesión habitual siguen funcionando.
 3. Activar Fail2ban y comprobar que `nginx -t` y `fail2ban-client status vaultwarden-cfm` funcionan correctamente.
-4. Desde una **IP de pruebas diferente**, realizar cinco accesos deliberadamente incorrectos con una cuenta de prueba en menos de diez minutos. Comprobar el bloqueo mediante `fail2ban-client status vaultwarden-cfm` y la respuesta HTTP 403. Verificar que otra IP no resulte afectada.
+4. Desde una **IP de pruebas diferente**, realizar diez accesos deliberadamente incorrectos con una cuenta de prueba en menos de diez minutos. Comprobar el bloqueo mediante `fail2ban-client status vaultwarden-cfm` y la respuesta HTTP 403. Verificar que otra IP no resulte afectada.
 5. Desbloquear la IP de prueba con `fail2ban-client set vaultwarden-cfm unbanip IP_DE_PRUEBA` y confirmar que el acceso vuelve a funcionar.
 6. Comprobar que reiniciar el complemento y establecer `fail2ban_enabled: false` no provocan bloqueos accidentales. No realizar pruebas desde el único acceso de administración.
 7. Verificar la rotación de los registros y su consumo de espacio antes de mantener la funcionalidad activada de forma continua.
 
+### Consulta y desbloqueo manual
+
+Una vez desplegado y verificado, desde una consola que pueda ejecutar comandos **dentro del contenedor del complemento**:
+
+```bash
+fail2ban-client status vaultwarden-cfm
+fail2ban-client set vaultwarden-cfm unbanip 203.0.113.42
+```
+
+Sustituir `203.0.113.42` por la IP real que quieras desbloquear. No editar manualmente `banned.map` ni la base de datos SQLite: el desbloqueo debe actualizar ambos estados a través de Fail2ban.
+
 ### Recuperación del acceso
 
-Si se pierde el acceso por un bloqueo, desactivar Fail2ban desde las opciones del complemento y reiniciarlo. Durante la inicialización se vacía el mapa de bloqueo de Nginx. Es recomendable conservar un acceso de administración local a Home Assistant.
+Si se pierde el acceso por un bloqueo, desactivar Fail2ban desde las opciones del complemento y reiniciarlo. Durante la inicialización se vacía el mapa de bloqueo de Nginx, pero **los registros permanentes siguen almacenados en SQLite y pueden volver a aplicarse al reactivar Fail2ban**. Para retirar definitivamente una IP, hay que desbloquearla mediante `fail2ban-client` mientras el servicio esté activo.
+
+Es recomendable conservar una vía alternativa y local de administración de Home Assistant. La sanción permanente puede afectar a varios usuarios que compartan una IP o sufran cambios de IP pública.
 
 ### Limitaciones
 
