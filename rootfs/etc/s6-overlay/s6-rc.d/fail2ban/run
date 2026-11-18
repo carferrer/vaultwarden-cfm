@@ -41,6 +41,11 @@ bantime = $bantime
 findtime = $findtime
 maxretry = $maxretry
 
+# Debian may enable the sshd jail by default, but this add-on does not
+# provide a host SSH service or a systemd journal for that jail.
+[sshd]
+enabled = false
+
 [vaultwarden-cfm]
 enabled = true
 filter = vaultwarden-cfm
