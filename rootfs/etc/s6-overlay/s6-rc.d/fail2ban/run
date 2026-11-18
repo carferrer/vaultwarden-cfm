@@ -1,0 +1,44 @@
+#!/command/with-contenv bashio
+# Fail2ban runs unprivileged with respect to the host network firewall.
+# The nginx-block-map action updates a deny map and reloads local Nginx.
+if ! bashio::config.true 'fail2ban_enabled'; then
+    bashio::log.info 'Fail2ban is disabled by addon configuration.'
+    exec sleep infinity
+fi
+
+maxretry="$(bashio::config 'fail2ban_maxretry')"
+findtime="$(bashio::config 'fail2ban_findtime')"
+bantime="$(bashio::config 'fail2ban_bantime')"
+
+# Bound these knobs, rejecting dangerous or malformed values.
+for value in "$maxretry" "$findtime" "$bantime"; do
+    [[ "$value" =~ ^[0-9]+$ ]] || bashio::exit.nok 'Fail2ban values must be positive integers'
+done
+(( maxretry >= 2 && maxretry <= 100 )) || bashio::exit.nok 'fail2ban_maxretry must be 2..100'
+(( findtime >= 60 && findtime <= 86400 )) || bashio::exit.nok 'fail2ban_findtime must be 60..86400'
+(( bantime >= 60 && bantime <= 604800 )) || bashio::exit.nok 'fail2ban_bantime must be 60..604800'
+
+mkdir -p /run/fail2ban /data/fail2ban /etc/fail2ban/jail.d
+touch /data/fail2ban/vaultwarden.log /data/fail2ban/banned.map
+chmod 600 /data/fail2ban/banned.map /data/fail2ban/vaultwarden.log
+
+cat > /etc/fail2ban/jail.d/vaultwarden-cfm.local <<EOF
+[DEFAULT]
+backend = polling
+usedns = no
+dbfile = /data/fail2ban/fail2ban.sqlite3
+bantime = $bantime
+findtime = $findtime
+maxretry = $maxretry
+
+[vaultwarden-cfm]
+enabled = true
+filter = vaultwarden-cfm
+logpath = /data/fail2ban/vaultwarden.log
+action = nginx-block-map[blck_lst_file=/data/fail2ban/banned.map]
+EOF
+
+# The Nginx reload action must see a running and validated Nginx.
+bashio::net.wait_for 7277
+bashio::log.info 'Starting Fail2ban for Vaultwarden failed logins...'
+exec fail2ban-server -f -x start
