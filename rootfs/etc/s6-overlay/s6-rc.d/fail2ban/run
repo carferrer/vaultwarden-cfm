@@ -31,6 +31,7 @@ chmod 600 /data/fail2ban/banned.map /data/fail2ban/vaultwarden.log
 cat > /etc/fail2ban/fail2ban.local <<EOF
 [Definition]
 dbfile = /data/fail2ban/fail2ban.sqlite3
+logtarget = STDOUT
 EOF
 
 cat > /etc/fail2ban/jail.d/vaultwarden-cfm.local <<EOF
@@ -55,5 +56,8 @@ EOF
 
 # The Nginx reload action must see a running and validated Nginx.
 bashio::net.wait_for 7277
+# Also reconcile after a Fail2ban-only crash, when init-nginx did not run.
+# Restoring SQLite tickets appends each active IP to this fresh map.
+/usr/local/bin/vaultwarden-reset-ban-map --reload || bashio::exit.nok 'Cannot reset the Nginx ban map'
 bashio::log.info 'Starting Fail2ban for Vaultwarden failed logins...'
 exec fail2ban-server -f -x start

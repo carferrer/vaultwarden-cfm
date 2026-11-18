@@ -40,9 +40,13 @@ Nginx obtiene la IP del cliente mediante `$remote_addr`. Si se añade un proxy i
 
 ### Funcionamiento previsto
 
-Cuando se activa, Vaultwarden escribe los errores de autenticación en `/data/fail2ban/vaultwarden.log`. Fail2ban examina ese registro mediante su filtro y mantiene las IP sancionadas en `/data/fail2ban/banned.map`.
+Cuando se activa, Vaultwarden escribe los mensajes del nivel de registro configurado (incluidos los errores de autenticación) en `/data/fail2ban/vaultwarden.log`. El filtro de Fail2ban exige el prefijo exacto del registro de autenticación y captura la IP antes del nombre de usuario, para impedir que un nombre manipulado seleccione otra IP.
 
-Nginx consulta la lista de bloqueo y devuelve una respuesta **HTTP 403** a las IP sancionadas. La base de datos de estado de Fail2ban se almacena en `/data/fail2ban/fail2ban.sqlite3` mediante su configuración global. Esto permite restaurar las sanciones permanentes después de reiniciar el complemento o Home Assistant. Se debe comprobar este comportamiento durante las pruebas.
+El servicio S6 de rotación comprueba el registro cada 60 segundos. Al superar 10 MiB, lo rota, conserva tres archivos anteriores y comprime los más antiguos. Envía SIGHUP a Vaultwarden para reabrir el archivo nuevo, con permisos `0600`. El tamaño puede superar el umbral entre comprobaciones; no es una cuota estricta. Los mensajes internos de Fail2ban se envían al registro del contenedor.
+
+Nginx consulta `/data/fail2ban/banned.map` y devuelve una respuesta **HTTP 403** a las IP sancionadas. La fuente de las sanciones es SQLite en `/data/fail2ban/fail2ban.sqlite3`. El mapa se vacía antes de arrancar Nginx y antes de cada arranque de Fail2ban, que restaura desde SQLite únicamente las sanciones vigentes. Esto evita entradas duplicadas y bloqueos caducados tras una parada brusca, incluso si solo se reinicia Fail2ban. Durante la restauración existe un breve intervalo sin los bloqueos HTTP.
+
+La CI ejecuta pruebas con las imágenes amd64 y aarch64 y datos desechables: filtro, cabeceras, IPv4/IPv6, umbral de diez fallos, HTTP 403, desbloqueo, restauración tras SIGKILL y rotación. Las pruebas no sustituyen la validación de la red pública ni del ciclo completo de Home Assistant.
 
 ### Verificaciones obligatorias antes de desplegar
 

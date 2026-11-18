@@ -27,6 +27,7 @@ RUN \
         libpq5=17.11-0+deb13u1 \
         nginx=1.26.3-3+deb13u10 \
         fail2ban=1.1.0-8 \
+        'logrotate=3.22.0-1*' \
         sqlite3=3.46.1-7+deb13u2 \
     && apt-get clean \
     && rm -f -r \
@@ -39,7 +40,9 @@ RUN \
 COPY rootfs /
 
 RUN chmod +x /etc/s6-overlay/s6-rc.d/init-nginx/run \
-    /etc/s6-overlay/s6-rc.d/fail2ban/run
+    /etc/s6-overlay/s6-rc.d/fail2ban/run \
+    /etc/s6-overlay/s6-rc.d/vaultwarden-logrotate/run \
+    /usr/local/bin/vaultwarden-reset-ban-map
 
 # Build arguments
 ARG BUILD_ARCH
