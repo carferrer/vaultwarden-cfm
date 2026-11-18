@@ -6,7 +6,7 @@ server {
     include /etc/nginx/includes/ssl_params.conf;
     include /etc/nginx/includes/proxy_params.conf;
 
-    # Drop requests from addresses blocked by Fail2ban.
+    # Rechazar con HTTP 403 las peticiones procedentes de IP sancionadas por Fail2ban.
     if ($fail2ban_blocked) { return 403; }
 
     ssl_certificate /ssl/%%certfile%%;
