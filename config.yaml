@@ -1,6 +1,6 @@
 ---
 name: Vaultwarden
-version: 2026.11.01
+version: 2026.11.02
 slug: bitwarden-cfm
 description: Open source gestor contraseñas
 url: https://github.com/carferrer/vaultwarden-cfm
@@ -21,9 +21,17 @@ options:
   ssl: true
   certfile: fullchain.pem
   keyfile: privkey.pem
+  fail2ban_enabled: false
+  fail2ban_maxretry: 5
+  fail2ban_findtime: 600
+  fail2ban_bantime: 3600
 schema:
   log_level: list(trace|debug|info|notice|warning|error|fatal)?
   ssl: bool
   certfile: str
   keyfile: str
   request_size_limit: int?
+  fail2ban_enabled: bool
+  fail2ban_maxretry: int
+  fail2ban_findtime: int
+  fail2ban_bantime: int
