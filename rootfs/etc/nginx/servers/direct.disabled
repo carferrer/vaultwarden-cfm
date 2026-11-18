@@ -5,6 +5,8 @@ server {
     include /etc/nginx/includes/server_params.conf;
     include /etc/nginx/includes/proxy_params.conf;
 
+    if ($fail2ban_blocked) { return 403; }
+
     location / {
         proxy_pass http://backend;
     }
