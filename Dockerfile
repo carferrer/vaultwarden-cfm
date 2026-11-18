@@ -1,23 +1,23 @@
 ARG BUILD_FROM=ghcr.io/hassio-addons/debian-base:9.5.2
 ###############################################################################
-# Get prebuilt containers from Vaultwarden
+# Obtener los contenedores precompilados de Vaultwarden
 ###############################################################################
 FROM "vaultwarden/server:1.37.5" AS vaultwarden
 
 ###############################################################################
-# Build the actual app.
+# Construir el complemento
 ###############################################################################
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}
 
-# Set shell
+# Configurar el intérprete de comandos
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Get the Vaultwarden from official images
+# Copiar Vaultwarden desde las imágenes oficiales
 COPY --from=vaultwarden /vaultwarden /opt/vaultwarden
 COPY --from=vaultwarden /web-vault /opt/web-vault
 
-# add Nginx
+# Instalar Nginx y Fail2ban
 # hadolint ignore=DL3009
 RUN \
     apt-get update \
@@ -35,13 +35,13 @@ RUN \
     && mkdir -p /var/log/nginx \
     && touch /var/log/nginx/error.log
 
-# Copy root filesystem
+# Copiar los archivos de configuración del complemento
 COPY rootfs /
 
 RUN chmod +x /etc/s6-overlay/s6-rc.d/init-nginx/run \
     /etc/s6-overlay/s6-rc.d/fail2ban/run
 
-# Build arguments
+# Argumentos de compilación
 ARG BUILD_ARCH
 ARG BUILD_DATE
 ARG BUILD_DESCRIPTION
@@ -50,7 +50,7 @@ ARG BUILD_REF
 ARG BUILD_REPOSITORY
 ARG BUILD_VERSION
 
-# Labels
+# Metadatos de la imagen
 LABEL \
     io.hass.name="${BUILD_NAME}" \
     io.hass.description="${BUILD_DESCRIPTION}" \
