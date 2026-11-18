@@ -11,22 +11,32 @@ findtime="$(bashio::config 'fail2ban_findtime')"
 bantime="$(bashio::config 'fail2ban_bantime')"
 
 # Bound these knobs, rejecting dangerous or malformed values.
-for value in "$maxretry" "$findtime" "$bantime"; do
-    [[ "$value" =~ ^[0-9]+$ ]] || bashio::exit.nok 'Fail2ban values must be positive integers'
+for value in "$maxretry" "$findtime"; do
+    [[ "$value" =~ ^[0-9]+$ ]] || bashio::exit.nok 'Fail2ban retry and detection values must be positive integers'
 done
 (( maxretry >= 2 && maxretry <= 100 )) || bashio::exit.nok 'fail2ban_maxretry must be 2..100'
 (( findtime >= 60 && findtime <= 86400 )) || bashio::exit.nok 'fail2ban_findtime must be 60..86400'
-(( bantime >= 60 && bantime <= 604800 )) || bashio::exit.nok 'fail2ban_bantime must be 60..604800'
+# Fail2ban uses -1 for permanent bans. Other values must be valid finite durations.
+if [[ "$bantime" != "-1" ]]; then
+    [[ "$bantime" =~ ^[0-9]+$ ]] || bashio::exit.nok 'fail2ban_bantime must be -1 or a positive integer'
+    (( bantime >= 60 && bantime <= 604800 )) || bashio::exit.nok 'fail2ban_bantime must be -1 or 60..604800'
+fi
 
 mkdir -p /run/fail2ban /data/fail2ban /etc/fail2ban/jail.d
 touch /data/fail2ban/vaultwarden.log /data/fail2ban/banned.map
 chmod 600 /data/fail2ban/banned.map /data/fail2ban/vaultwarden.log
 
+# The database setting belongs to Fail2ban's global configuration, not jail.d.
+# Keep it under the add-on's persistent /data directory to restore bans on restart.
+cat > /etc/fail2ban/fail2ban.local <<EOF
+[Definition]
+dbfile = /data/fail2ban/fail2ban.sqlite3
+EOF
+
 cat > /etc/fail2ban/jail.d/vaultwarden-cfm.local <<EOF
 [DEFAULT]
 backend = polling
 usedns = no
-dbfile = /data/fail2ban/fail2ban.sqlite3
 bantime = $bantime
 findtime = $findtime
 maxretry = $maxretry
