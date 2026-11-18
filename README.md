@@ -1,31 +1,22 @@
-Open source password management solution.
+# Vaultwarden para Home Assistant
 
-## About
+Complemento de gestión de contraseñas de código abierto basado en Vaultwarden.
 
-Bitwarden is an open-source password manager that can store sensitive
-information such as website credentials in an encrypted vault.
+## Descripción
 
-The Bitwarden platform offers a variety of client applications including
-a web interface, desktop applications, browser extensions and mobile apps.
+Vaultwarden es una implementación ligera y de código abierto compatible con los clientes de Bitwarden. Permite almacenar información confidencial, como credenciales de sitios web, en una bóveda cifrada y alojada en tu propio servidor.
 
-This app is based upon the lightweight and opensource
-implementation, allowing you to self-host
-this amazing password manager.
+Puedes acceder mediante la interfaz web, las aplicaciones de escritorio y móvil y las extensiones para navegadores compatibles.
 
-Password theft is a serious problem. The websites and apps that you use are
-under attack every day. Security breaches occur and your passwords are stolen.
-When you reuse the same passwords everywhere hackers can easily access your
-email, bank, and other important accounts. USE A PASSWORD MANAGER!
+El robo de contraseñas es un riesgo importante. Reutilizar una misma contraseña en varios servicios facilita el acceso no autorizado cuando uno de ellos sufre una filtración. Se recomienda utilizar contraseñas únicas y activar la autenticación de dos factores.
 
+## Protección opcional con Fail2ban (experimental)
 
+El complemento puede detectar intentos reiterados de inicio de sesión con contraseñas incorrectas en los registros de Vaultwarden y bloquear temporalmente la IP de origen mediante el Nginx incluido. No necesita conceder `NET_ADMIN` al contenedor de Home Assistant ni modificar el cortafuegos del anfitrión.
 
-## Optional Fail2ban protection (experimental)
+**Esta funcionalidad está desactivada por defecto y todavía requiere pruebas antes de utilizarse en producción.**
 
-This add-on can detect repeated incorrect passwords in Vaultwarden logs and deny
-the source IP in its bundled Nginx proxy without granting `NET_ADMIN` to the
-Home Assistant container. **The feature is disabled by default.**
-
-Add-on options:
+### Opciones del complemento
 
 ```yaml
 fail2ban_enabled: false
@@ -34,39 +25,43 @@ fail2ban_findtime: 600
 fail2ban_bantime: 3600
 ```
 
-The deployment should have direct NAT forwarding to port 7277. Nginx reads the
-client's actual peer IP using `$remote_addr`; if placed behind another proxy,
-configure trusted real-IP handling first or you may block the proxy itself.
+- `fail2ban_enabled`: activa o desactiva la protección.
+- `fail2ban_maxretry`: número máximo de intentos fallidos.
+- `fail2ban_findtime`: período de detección, en segundos.
+- `fail2ban_bantime`: duración de la sanción, en segundos.
 
-When enabled, Vaultwarden's `[ERROR] Username or password is incorrect`
-messages are written to `/data/fail2ban/vaultwarden.log` and matched by a
-Fail2ban jail. An `nginx-block-map` action maintains
-`/data/fail2ban/banned.map`, causing Nginx to return HTTP 403 for blocked
-addresses. The Fail2ban state database is persisted in `/data/fail2ban`.
+La configuración predeterminada prevé **5 intentos fallidos en 10 minutos**, seguidos de **1 hora de bloqueo**.
 
-### Verify before production deployment
+### Requisitos de red
 
-1. Verify the add-on image builds on **both amd64 and aarch64** and runs with
-   Home Assistant's S6 service manager.
-2. With the option disabled, verify HTTPS and a valid login still work.
-3. Enable the option; confirm both `nginx -t` and
-   `fail2ban-client status vaultwarden-cfm` succeed.
-4. From a **separate test IP**, attempt five deliberately incorrect passwords
-   for a test account within ten minutes. Confirm a ban with
-   `fail2ban-client status vaultwarden-cfm` and HTTP 403 from that test IP.
-   Verify a different IP is unaffected.
-5. Test unblocking with
-   `fail2ban-client set vaultwarden-cfm unbanip TEST_IP`, and confirm Nginx
-   accepts the previously blocked address again.
-6. Verify that a restart and toggling `fail2ban_enabled: false` do not cause
-   accidental lockout. Do not test against your only administrator connection.
+La configuración prevista utiliza una redirección NAT directa del puerto 7277 hacia el complemento, sin otro proxy inverso.
 
-**Recovery:** If access is lost, disable Fail2ban in the add-on options and
-restart the add-on. This clears the Nginx ban map at initialization. Maintain
-a local Home Assistant administration path.
+Nginx obtiene la IP del cliente mediante `$remote_addr`. Si se añade un proxy inverso, deberá configurarse correctamente la identificación de IP reales de proxies de confianza. De lo contrario, podría bloquearse la IP del proxy y afectar a varios usuarios.
 
-**Limits:** This is an application-layer HTTP 403, **not** a network-level
-firewall ban. Only documented password-failure messages are covered; admin,
-TOTP, other authentication errors, and general HTTP probing require further
-filters. Review the log rotation strategy before keeping the protection
-enabled for long periods. A strong master password and 2FA remain essential.
+### Funcionamiento previsto
+
+Cuando se activa, Vaultwarden escribe los errores de autenticación en `/data/fail2ban/vaultwarden.log`. Fail2ban examina ese registro mediante su filtro y mantiene las IP sancionadas en `/data/fail2ban/banned.map`.
+
+Nginx consulta la lista de bloqueo y devuelve una respuesta **HTTP 403** a las IP sancionadas. La base de datos de estado de Fail2ban se almacena en `/data/fail2ban`.
+
+### Verificaciones obligatorias antes de desplegar
+
+1. Comprobar que la imagen compila para **amd64 y aarch64** y que los servicios arrancan correctamente con S6.
+2. Con Fail2ban desactivado, verificar que el acceso HTTPS y el inicio de sesión habitual siguen funcionando.
+3. Activar Fail2ban y comprobar que `nginx -t` y `fail2ban-client status vaultwarden-cfm` funcionan correctamente.
+4. Desde una **IP de pruebas diferente**, realizar cinco accesos deliberadamente incorrectos con una cuenta de prueba en menos de diez minutos. Comprobar el bloqueo mediante `fail2ban-client status vaultwarden-cfm` y la respuesta HTTP 403. Verificar que otra IP no resulte afectada.
+5. Desbloquear la IP de prueba con `fail2ban-client set vaultwarden-cfm unbanip IP_DE_PRUEBA` y confirmar que el acceso vuelve a funcionar.
+6. Comprobar que reiniciar el complemento y establecer `fail2ban_enabled: false` no provocan bloqueos accidentales. No realizar pruebas desde el único acceso de administración.
+7. Verificar la rotación de los registros y su consumo de espacio antes de mantener la funcionalidad activada de forma continua.
+
+### Recuperación del acceso
+
+Si se pierde el acceso por un bloqueo, desactivar Fail2ban desde las opciones del complemento y reiniciarlo. Durante la inicialización se vacía el mapa de bloqueo de Nginx. Es recomendable conservar un acceso de administración local a Home Assistant.
+
+### Limitaciones
+
+El bloqueo se realiza en la **capa HTTP** mediante una respuesta 403; **no** equivale a bloquear el tráfico TCP en el cortafuegos del router.
+
+El filtro previsto cubre únicamente los mensajes documentados de contraseñas incorrectas. Los errores de acceso al panel de administración, TOTP, otros problemas de autenticación y sondeos HTTP requerirían filtros adicionales.
+
+Fail2ban es una medida complementaria: deben mantenerse una contraseña maestra robusta y la autenticación de dos factores.
