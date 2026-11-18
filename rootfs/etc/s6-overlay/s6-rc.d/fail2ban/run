@@ -1,8 +1,8 @@
 #!/command/with-contenv bashio
-# Fail2ban runs unprivileged with respect to the host network firewall.
-# The nginx-block-map action updates a deny map and reloads local Nginx.
+# Fail2ban no necesita permisos para modificar el cortafuegos del anfitrión.
+# La acción nginx-block-map actualiza la lista de bloqueo y recarga el Nginx local.
 if ! bashio::config.true 'fail2ban_enabled'; then
-    bashio::log.info 'Fail2ban is disabled by addon configuration.'
+    bashio::log.info 'Fail2ban está desactivado en la configuración del complemento.'
     exec sleep infinity
 fi
 
@@ -10,13 +10,13 @@ maxretry="$(bashio::config 'fail2ban_maxretry')"
 findtime="$(bashio::config 'fail2ban_findtime')"
 bantime="$(bashio::config 'fail2ban_bantime')"
 
-# Bound these knobs, rejecting dangerous or malformed values.
+# Limitar los parámetros y rechazar valores incorrectos o peligrosos.
 for value in "$maxretry" "$findtime" "$bantime"; do
-    [[ "$value" =~ ^[0-9]+$ ]] || bashio::exit.nok 'Fail2ban values must be positive integers'
+    [[ "$value" =~ ^[0-9]+$ ]] || bashio::exit.nok 'Los valores de Fail2ban deben ser números enteros positivos'
 done
-(( maxretry >= 2 && maxretry <= 100 )) || bashio::exit.nok 'fail2ban_maxretry must be 2..100'
-(( findtime >= 60 && findtime <= 86400 )) || bashio::exit.nok 'fail2ban_findtime must be 60..86400'
-(( bantime >= 60 && bantime <= 604800 )) || bashio::exit.nok 'fail2ban_bantime must be 60..604800'
+(( maxretry >= 2 && maxretry <= 100 )) || bashio::exit.nok 'fail2ban_maxretry debe estar entre 2 y 100'
+(( findtime >= 60 && findtime <= 86400 )) || bashio::exit.nok 'fail2ban_findtime debe estar entre 60 y 86400'
+(( bantime >= 60 && bantime <= 604800 )) || bashio::exit.nok 'fail2ban_bantime debe estar entre 60 y 604800'
 
 mkdir -p /run/fail2ban /data/fail2ban /etc/fail2ban/jail.d
 touch /data/fail2ban/vaultwarden.log /data/fail2ban/banned.map
@@ -38,7 +38,7 @@ logpath = /data/fail2ban/vaultwarden.log
 action = nginx-block-map[blck_lst_file=/data/fail2ban/banned.map]
 EOF
 
-# The Nginx reload action must see a running and validated Nginx.
+# La acción de recarga necesita que Nginx esté en ejecución y su configuración sea válida.
 bashio::net.wait_for 7277
-bashio::log.info 'Starting Fail2ban for Vaultwarden failed logins...'
+bashio::log.info 'Iniciando Fail2ban para detectar accesos fallidos a Vaultwarden...'
 exec fail2ban-server -f -x start
