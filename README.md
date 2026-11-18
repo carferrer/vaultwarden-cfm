@@ -46,6 +46,8 @@ El servicio S6 de rotación comprueba el registro cada 60 segundos. Al superar 1
 
 Nginx consulta `/data/fail2ban/banned.map` y devuelve una respuesta **HTTP 403** a las IP sancionadas. La fuente de las sanciones es SQLite en `/data/fail2ban/fail2ban.sqlite3`. El mapa se vacía antes de arrancar Nginx y antes de cada arranque de Fail2ban, que restaura desde SQLite únicamente las sanciones vigentes. Esto evita entradas duplicadas y bloqueos caducados tras una parada brusca, incluso si solo se reinicia Fail2ban. Durante la restauración existe un breve intervalo sin los bloqueos HTTP.
 
+Al arrancar, Fail2ban comienza a leer al final del registro: no vuelve a contar errores antiguos que podrían anular un desbloqueo manual después de una parada brusca. Las sanciones vigentes se restauran desde SQLite, pero los intentos escritos mientras Fail2ban está detenido no se contabilizan.
+
 La CI ejecuta pruebas con las imágenes amd64 y aarch64 y datos desechables: filtro, cabeceras, IPv4/IPv6, umbral de diez fallos, HTTP 403, desbloqueo, restauración tras SIGKILL y rotación. Las pruebas no sustituyen la validación de la red pública ni del ciclo completo de Home Assistant.
 
 ### Verificaciones obligatorias antes de desplegar

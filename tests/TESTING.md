@@ -56,3 +56,8 @@ Home Assistant instance with an alternate administration path before deployment.
 The rotation threshold is checked once per minute, so peak disk usage can exceed
 10 MiB between checks. Map restoration briefly removes HTTP bans while the
 SQLite tickets are reapplied.
+
+The jail starts at the log's end on restart. This prevents delayed log-cursor
+checkpoints from replaying pre-unban failures after a crash. Active SQLite
+bans are still restored, but attempts logged while the jail is stopped are not
+counted.

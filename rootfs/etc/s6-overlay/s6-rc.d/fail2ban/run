@@ -50,7 +50,10 @@ enabled = false
 [vaultwarden-cfm]
 enabled = true
 filter = vaultwarden-cfm
-logpath = /data/fail2ban/vaultwarden.log
+# SQLite restores active bans. Start at EOF to avoid replaying old failures
+# after an explicit unban followed by a crash before the log cursor was saved.
+# Login events written while the jail is stopped are intentionally not counted.
+logpath = /data/fail2ban/vaultwarden.log tail
 action = nginx-block-map[blck_lst_file=/data/fail2ban/banned.map]
 EOF
 
