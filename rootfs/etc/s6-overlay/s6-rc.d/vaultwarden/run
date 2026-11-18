@@ -1,24 +1,24 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 # ==============================================================================
-# Complemento de Home Assistant: Vaultwarden
-# Inicia el servidor Vaultwarden
+# Home Assistant Community App: Vaultwarden
+# Runs the Vaultwarden server
 # ==============================================================================
 declare admin_token
 declare log_level
 declare request_size_limit
 declare secret_key
 
-# Establecer valores predeterminados
+# Set defaults
 export DATA_FOLDER=/data
 export ROCKET_PORT=80
 export ROCKET_WORKERS=2
 
-# Generar una clave aleatoria para evitar avisos innecesarios en los registros.
+# Set a random secret, to remove confusing warning from logs.
 secret_key=$(openssl rand -base64 32)
 export ROCKET_SECRET_KEY="${secret_key}"
 
-# Determinar el nivel de registro correspondiente
+# Find the matching log level
 if bashio::config.has_value 'log_level'; then
     case "$(bashio::string.lower "$(bashio::config 'log_level')")" in
         all|trace)
@@ -44,49 +44,49 @@ if bashio::config.has_value 'log_level'; then
     export LOG_LEVEL="${log_level}"
 fi
 
-# Fail2ban necesita un registro persistente específico de autenticación de Vaultwarden.
+# Fail2ban needs a dedicated persistent Vaultwarden authentication log.
 if bashio::config.true 'fail2ban_enabled'; then
     mkdir -p /data/fail2ban
     touch /data/fail2ban/vaultwarden.log
     chmod 600 /data/fail2ban/vaultwarden.log
     export EXTENDED_LOGGING=true
     export LOG_FILE=/data/fail2ban/vaultwarden.log
-    # No se deben desactivar los mensajes de error cuando está habilitado Fail2ban.
+    # Error events must not be disabled by an optional logging setting.
     if [[ "${LOG_LEVEL:-}" == "off" ]]; then
-        bashio::log.warning 'Se cambia LOG_LEVEL=off a error para permitir el funcionamiento de Fail2ban.'
+        bashio::log.warning 'Override LOG_LEVEL=off to error for Fail2ban.'
         export LOG_LEVEL=error
     fi
 fi
 
-# Mostrar el token de administración en el registro cuando aún no existe configuración.
+# Show admin token in the log, if config does not exist.
 if ! bashio::fs.file_exists '/data/config.json'; then
     admin_token=$(openssl rand -base64 48)
     export ADMIN_TOKEN="${admin_token}"
 
     bashio::log.info
     bashio::log.info
-    bashio::log.info "¡LEE ESTO ATENTAMENTE! ¡LEE ESTO ATENTAMENTE!"
+    bashio::log.info "READ THIS CAREFULLY! READ THIS CAREFULLY!"
     bashio::log.info
     bashio::log.info
-    bashio::log.info "Este es tu token o contraseña temporal de administración, generado aleatoriamente."
+    bashio::log.info "This is your temporary random admin token/password!"
     bashio::log.info
     bashio::log.info "${admin_token}"
     bashio::log.info
-    bashio::log.info "Cámbialo en el panel de administración lo antes posible."
+    bashio::log.info "Be sure to change it in the admin panel, as soon as possible."
     bashio::log.info
-    bashio::log.info "Una vez que hayas modificado cualquier ajuste en el panel de administración,"
-    bashio::log.info "el complemento dejará de generar un token nuevo en cada arranque"
-    bashio::log.info "y dejará de mostrar este mensaje."
+    bashio::log.info "After you have changed ANY setting in the admin panel,"
+    bashio::log.info "the app will NOT generate a new token on each start"
+    bashio::log.info "and stops showing this message."
     bashio::log.info
 fi
 
-# Límite de tamaño de las peticiones a la API
+# API request size limit
 if bashio::config.has_value 'request_size_limit'; then
     request_size_limit=$(bashio::config 'request_size_limit')
     export ROCKET_LIMITS="{json=${request_size_limit}}"
 fi
 
-# Iniciar el servidor Vaultwarden
-bashio::log.info 'Iniciando el servidor Vaultwarden...'
+# Run the Vaultwarden server
+bashio::log.info 'Starting the Vaultwarden server...'
 cd /opt || bashio::exit.nok
 exec ./vaultwarden
