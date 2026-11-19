@@ -102,6 +102,38 @@ especially if running with limited resources.
 
 To set the limit, you can use this setting: 10MB would be `10485760`.
 
+### Options: `admin_restriction_enabled` and `admin_allowed_networks`
+
+Restrict the admin panel and its subpaths to selected IPv4/IPv6 addresses or
+CIDR networks. The switch defaults to `false`; the initial network list is
+`192.168.2.0/23`. Example activation:
+
+```yaml
+admin_restriction_enabled: true
+admin_allowed_networks:
+  - 192.168.2.0/23
+```
+
+Add further entries only for networks you trust (for example your actual VPN
+subnet). An enabled empty list denies every admin request. Invalid entries
+prevent Nginx startup with an error instead of opening access. IPs become host
+routes; CIDRs with host bits are normalized. Both HTTP and HTTPS are covered,
+including admin routes beneath a Vaultwarden DOMAIN path prefix. The vault,
+API and synchronization remain public. The admin password is still required,
+and Fail2ban bans still apply to allowed clients.
+
+The rule uses the socket peer address, never client-supplied forwarding
+headers. Direct port forwarding must preserve the original client IP; a router,
+NAT or reverse proxy that substitutes an allowed source can defeat this
+boundary. VPN clients need their observed source network explicitly allowed.
+
+Restart the app after saving changes. Verify admin access from an allowed LAN
+client and HTTP 403 from mobile data with Wi-Fi/VPN off; confirm vault login
+and sync still work externally. Keep local Home Assistant access available.
+To recover, disable `admin_restriction_enabled` in the app's options and restart.
+This does not clear Fail2ban bans. If necessary, use local DNS for the normal
+HTTPS hostname to avoid hairpin NAT and retain certificate validation.
+
 ## Known issues and limitations
 
 - This app cannot support Ingress at this time due to technical limitations

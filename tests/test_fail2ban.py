@@ -60,6 +60,7 @@ class Fail2banIntegration(unittest.TestCase):
         if any(data.iterdir()):
             raise RuntimeError("Tests require an empty disposable /data directory")
         Path("/data/config.json").write_text("{}\n")
+        Path("/data/options.json").write_text("{}\n")
         DATA.mkdir()
         cls.outputs = []
         cls.nginx = cls.fail2ban = cls.supervisor = None

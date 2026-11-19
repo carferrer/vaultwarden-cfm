@@ -21,6 +21,9 @@ options:
   ssl: true
   certfile: fullchain.pem
   keyfile: privkey.pem
+  admin_restriction_enabled: false
+  admin_allowed_networks:
+    - 192.168.2.0/23
   fail2ban_enabled: false
   fail2ban_maxretry: 10
   fail2ban_findtime: 600
@@ -31,6 +34,9 @@ schema:
   certfile: str
   keyfile: str
   request_size_limit: int?
+  admin_restriction_enabled: bool
+  admin_allowed_networks:
+    - str
   fail2ban_enabled: bool
   fail2ban_maxretry: int
   fail2ban_findtime: int

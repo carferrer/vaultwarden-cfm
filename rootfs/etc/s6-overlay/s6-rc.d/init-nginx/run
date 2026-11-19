@@ -9,6 +9,11 @@ declare keyfile
 
 bashio::config.require.ssl
 
+# Validate and generate the admin ACL before Nginx can start.
+if ! python3 /usr/local/bin/vaultwarden-admin-access; then
+    bashio::exit.nok 'Invalid admin access configuration; Nginx will not start.'
+fi
+
 # SQLite is authoritative. Never load a stale or duplicated map after a crash.
 /usr/local/bin/vaultwarden-reset-ban-map
 

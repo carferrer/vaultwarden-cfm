@@ -10,6 +10,62 @@ Puedes acceder mediante la interfaz web, las aplicaciones de escritorio y móvil
 
 El robo de contraseñas es un riesgo importante. Reutilizar una misma contraseña en varios servicios facilita el acceso no autorizado cuando uno de ellos sufre una filtración. Se recomienda utilizar contraseñas únicas y activar la autenticación de dos factores.
 
+## Restricción opcional del panel de administración
+
+El complemento puede limitar `/admin` y sus subrutas a una lista de direcciones
+o redes permitidas. La bóveda, la API y la sincronización siguen accesibles por
+el puerto 7277. Se aplica tanto con HTTP como con HTTPS y también si el dominio
+de Vaultwarden utiliza un prefijo de ruta.
+
+La opción está **desactivada por defecto** para conservar el acceso de las
+instalaciones existentes. Para activarla en la red `192.168.2.0/23`:
+
+```yaml
+admin_restriction_enabled: true
+admin_allowed_networks:
+  - 192.168.2.0/23
+```
+
+- `admin_restriction_enabled`: activa o desactiva la restricción por red.
+- `admin_allowed_networks`: lista editable de IP individuales o redes CIDR,
+  tanto IPv4 como IPv6. Puedes añadir más entradas, por ejemplo la subred real
+  de una VPN. No se autorizan automáticamente otras redes privadas ni loopback.
+- `192.168.2.0/23` incluye `192.168.2.x` y `192.168.3.x`.
+- Con la restricción activa, una lista vacía deniega todo acceso a `/admin`.
+  Las direcciones no autorizadas reciben **HTTP 403**, incluido IPv6 si no se
+  ha permitido una dirección o red IPv6.
+- Las entradas inválidas impiden arrancar Nginx y generan un error en el
+  registro; no se interpretan como directivas. Las redes se normalizan, por
+  ejemplo `192.168.2.184/23` se convierte en `192.168.2.0/23`.
+- Guarda las opciones y **reinicia el complemento** para aplicar los cambios.
+  El panel mantiene su contraseña; la lista permitida no evita un bloqueo
+  independiente de Fail2ban.
+
+### Comprobación y recuperación
+
+Conserva una sesión local de Home Assistant para poder modificar las opciones.
+
+1. Desde la red permitida, abre el dominio HTTPS habitual con `/admin`:
+   debe aparecer el acceso al panel.
+2. Desde datos móviles, sin Wi-Fi ni VPN, comprueba que `/admin` y
+   `/admin/` devuelven 403, pero que la bóveda permite entrar y sincronizar.
+3. Reinicia el complemento y repite ambas comprobaciones.
+4. Si necesitas recuperar el acceso, configura
+   `admin_restriction_enabled: false` desde Home Assistant y reinicia.
+   Esto elimina solamente esta restricción; no retira sanciones de Fail2ban.
+
+La regla utiliza la IP de origen de la conexión a Nginx, no las cabeceras
+`X-Real-IP`, `X-Forwarded-For` ni `Forwarded` enviadas por el cliente.
+Está prevista para una redirección directa del puerto 7277. Comprueba desde
+fuera que el router conserva la IP del cliente: si un NAT, una VPN o un proxy
+sustituye el origen por una IP de la red permitida, Nginx no puede distinguir
+a los clientes originales. No añadas la IP de un proxy como solución sin
+configurar antes la identificación fiable de los clientes.
+
+Si el dominio público no funciona desde la LAN por el NAT de retorno del
+router, utiliza DNS local para resolver ese mismo dominio a la IP local de
+Home Assistant. Así se conserva la validación del certificado HTTPS.
+
 ## Protección opcional con Fail2ban (experimental)
 
 El complemento puede detectar intentos reiterados de inicio de sesión con contraseñas incorrectas en los registros de Vaultwarden y bloquear de forma permanente la IP de origen mediante el Nginx incluido. No necesita conceder `NET_ADMIN` al contenedor de Home Assistant ni modificar el cortafuegos del anfitrión.
