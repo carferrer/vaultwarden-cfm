@@ -1,3 +1,11 @@
+# Versión 2026.11.05 (2026-11-19)
+
+## What's Changed
+* Update Nginx to deb13u11 for November security fixes by @carferrer in https://github.com/carferrer/vaultwarden-cfm/pull/40
+
+
+**Full Changelog**: https://github.com/carferrer/vaultwarden-cfm/compare/2026.11.04...2026.11.05
+
 # Versión 2026.11.04 (2026-11-19)
 
 ## What's Changed
