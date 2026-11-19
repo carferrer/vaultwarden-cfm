@@ -1,0 +1,13 @@
+---
+configuration:
+  admin_restriction_enabled:
+    name: Restringir acceso a administración por red
+    description: >-
+      Permite acceder a /admin solo desde las redes indicadas. Desactivado
+      por defecto. Reinicia el complemento después de cambiar esta opción.
+  admin_allowed_networks:
+    name: Redes permitidas para administración
+    description: >-
+      Lista de direcciones IPv4/IPv6 o redes CIDR, por ejemplo 192.168.2.0/23.
+      Con la restricción activada, una lista vacía bloquea todo acceso a /admin.
+      Se utiliza el origen real de la conexión, no las cabeceras reenviadas.

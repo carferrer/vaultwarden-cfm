@@ -61,3 +61,38 @@ The jail starts at the log's end on restart. This prevents delayed log-cursor
 checkpoints from replaying pre-unban failures after a crash. Active SQLite
 bans are still restored, but attempts logged while the jail is stopped are not
 counted.
+
+## Admin network restriction
+
+`test_admin_access.py` runs in a second fresh container in the same amd64 and
+aarch64 CI jobs. It invokes production Nginx initialization, both listener
+templates and the real Vaultwarden admin login. Only Supervisor Bashio calls
+are substituted; the ACL helper reads the real disposable `/data/options.json`.
+A temporary self-signed certificate exercises HTTPS without production keys.
+
+Coverage:
+
+- Six portable unit tests: defaults, disable/recovery, the 192.168.2.0/23
+  boundaries, multiple IPv4/IPv6 networks, host addresses, normalization,
+  duplicates, empty lists, invalid types/addresses, directive injection and
+  stale ACL cleanup after invalid or missing options.
+- Eight integration tests: HTTP/HTTPS with restriction on/off or options absent;
+  allowed/denied IPv4 CIDR boundaries; explicit IPv6 allowance and default denial;
+  multiple networks; empty-list denial; real admin login access and public
+  vault/API forwarding; normalized/encoded admin URLs, subpaths and path
+  prefixes; HTTP methods and spoofed forwarding headers; restart/disable/
+  re-enable/network changes; coexistence with the Fail2ban map; invalid settings
+  aborting initialization.
+
+Run locally with `python tests/test_admin_access.py` for the six unit tests
+(the eight container tests are skipped). For complete coverage, use the Docker
+command above with `/tests/test_admin_access.py` as its final argument. Never
+mount an existing data directory.
+
+The live socket tests use disposable loopback CIDRs, not a simulated public
+router or the user's physical LAN. The exact configured /23 is validated by
+the unit tests. HTTPS tests disable verification only for their generated
+self-signed test certificate. Supervisor form rendering/options persistence,
+real certificate validation, LAN/WAN/NAT/VPN routing, authenticated vault sync
+and a full Home Assistant restart remain manual checks. See the README for
+activation and recovery instructions.

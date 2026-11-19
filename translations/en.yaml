@@ -18,6 +18,17 @@ configuration:
     description: >-
       The private key file to use for SSL. Note that this file must
       exist in the /ssl/ folder.
+  admin_restriction_enabled:
+    name: Restrict admin access by network
+    description: >-
+      Allow /admin only from the configured networks. Disabled by default.
+      Restart the app after changing this option.
+  admin_allowed_networks:
+    name: Allowed admin networks
+    description: >-
+      List of IPv4/IPv6 addresses or CIDR networks, e.g. 192.168.2.0/23.
+      When restriction is enabled, an empty list denies all admin access.
+      Uses the actual connection source, not forwarding headers.
   request_size_limit:
     name: Size limit of HTTP requests
     description: >-

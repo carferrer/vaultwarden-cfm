@@ -1,0 +1,55 @@
+#!/usr/bin/python3
+"""Generate the Nginx admin ACL from Supervisor's startup options."""
+
+import ipaddress
+import json
+from pathlib import Path
+import sys
+
+
+DENY_ALL = "# Generated at startup; do not edit.\ndeny all;\n"
+
+
+def render(options):
+    if not isinstance(options, dict):
+        raise ValueError("add-on options must be a JSON object")
+    enabled = options.get("admin_restriction_enabled", False)
+    if not isinstance(enabled, bool):
+        raise ValueError("admin_restriction_enabled must be a boolean")
+    if not enabled:
+        # Disabling must also recover access with an invalid saved allowlist.
+        return "# Admin network restriction disabled.\nallow all;\n"
+
+    entries = options.get("admin_allowed_networks", [])
+    if not isinstance(entries, list):
+        raise ValueError("admin_allowed_networks must be a list of IPs or CIDRs")
+    networks = []
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, str) or "%" in entry:
+            raise ValueError(f"admin_allowed_networks entry {index + 1} must be an IP or CIDR without a zone ID")
+        try:
+            network = str(ipaddress.ip_network(entry.strip(), strict=False))
+        except ValueError as error:
+            # Do not echo untrusted text into the service log or Nginx config.
+            raise ValueError(f"admin_allowed_networks entry {index + 1} is not a valid IP or CIDR") from error
+        if network not in networks:
+            networks.append(network)
+    return ("# Generated at startup; do not edit.\n"
+            + "".join(f"allow {network};\n" for network in networks)
+            + "deny all;\n")
+
+
+def configure(options_path, output_path):
+    # Even a failed re-initialization must never leave an old allow-all ACL.
+    output_path.write_text(DENY_ALL, encoding="utf-8")
+    options = json.loads(options_path.read_text(encoding="utf-8"))
+    output_path.write_text(render(options), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    try:
+        configure(Path("/data/options.json"),
+                  Path("/etc/nginx/includes/admin-allow.conf"))
+    except (OSError, ValueError) as error:
+        print(f"Cannot configure admin network restriction: {error}", file=sys.stderr)
+        sys.exit(1)
