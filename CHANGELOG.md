@@ -1,3 +1,12 @@
+# Versión 2026.11.02 (2026-11-19)
+
+## What's Changed
+* ⬆️ Update ghcr.io/hassio-addons/debian-base Docker tag to v9.5.2 by @renovate[bot] in https://github.com/carferrer/vaultwarden-cfm/pull/33
+* WIP: optional Fail2ban IP bans through bundled Nginx by @carferrer in https://github.com/carferrer/vaultwarden-cfm/pull/34
+
+
+**Full Changelog**: https://github.com/carferrer/vaultwarden-cfm/compare/2026.11.01...2026.11.02
+
 # Versión 2026.11.01 (2026-11-02)
 
 ## What's Changed
