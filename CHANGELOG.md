@@ -1,3 +1,11 @@
+# Versión 2026.11.04 (2026-11-19)
+
+## What's Changed
+* Add configurable network restriction for the admin panel by @carferrer in https://github.com/carferrer/vaultwarden-cfm/pull/38
+
+
+**Full Changelog**: https://github.com/carferrer/vaultwarden-cfm/compare/2026.11.03...2026.11.04
+
 # Versión 2026.11.03 (2026-11-19)
 
 ## What's Changed
