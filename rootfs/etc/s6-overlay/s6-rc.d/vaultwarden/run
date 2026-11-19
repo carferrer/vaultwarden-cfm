@@ -44,6 +44,21 @@ if bashio::config.has_value 'log_level'; then
     export LOG_LEVEL="${log_level}"
 fi
 
+# Fail2ban needs a dedicated persistent Vaultwarden authentication log.
+if bashio::config.true 'fail2ban_enabled'; then
+    mkdir -p /data/fail2ban
+    touch /data/fail2ban/vaultwarden.log
+    chmod 600 /data/fail2ban/vaultwarden.log
+    export EXTENDED_LOGGING=true
+    export LOG_TIMESTAMP_FORMAT='%Y-%m-%d %H:%M:%S%.3f'
+    export LOG_FILE=/data/fail2ban/vaultwarden.log
+    # Error events must not be disabled by an optional logging setting.
+    if [[ "${LOG_LEVEL:-}" == "off" ]]; then
+        bashio::log.warning 'Override LOG_LEVEL=off to error for Fail2ban.'
+        export LOG_LEVEL=error
+    fi
+fi
+
 # Show admin token in the log, if config does not exist.
 if ! bashio::fs.file_exists '/data/config.json'; then
     admin_token=$(openssl rand -base64 48)

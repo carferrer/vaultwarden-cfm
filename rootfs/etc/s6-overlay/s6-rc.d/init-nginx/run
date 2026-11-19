@@ -9,6 +9,9 @@ declare keyfile
 
 bashio::config.require.ssl
 
+# SQLite is authoritative. Never load a stale or duplicated map after a crash.
+/usr/local/bin/vaultwarden-reset-ban-map
+
 if bashio::config.true 'ssl'; then
     certfile=$(bashio::config 'certfile')
     keyfile=$(bashio::config 'keyfile')

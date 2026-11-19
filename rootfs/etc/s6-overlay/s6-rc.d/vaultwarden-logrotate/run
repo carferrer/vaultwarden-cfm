@@ -1,0 +1,13 @@
+#!/command/with-contenv bashio
+# Do not rely on cron/systemd in an S6-managed add-on.
+if ! bashio::config.true 'fail2ban_enabled'; then
+    exec sleep infinity
+fi
+
+mkdir -p /data/fail2ban
+while true; do
+    if ! logrotate --state /data/fail2ban/logrotate.status /etc/logrotate-vaultwarden.conf; then
+        bashio::log.error 'Vaultwarden log rotation failed'
+    fi
+    sleep 60
+done
