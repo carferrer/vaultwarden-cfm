@@ -25,7 +25,7 @@ RUN \
     && apt-get install -y --no-install-recommends \
         libmariadb-dev-compat=1:11.8.6-0+deb13u1 \
         libpq5=17.11-0+deb13u1 \
-        nginx=1.26.3-3+deb13u10 \
+        nginx=1.26.3-3+deb13u11 \
         fail2ban=1.1.0-8 \
         'logrotate=3.22.0-1*' \
         sqlite3=3.46.1-7+deb13u2 \
