@@ -1,3 +1,11 @@
+# Versión 2026.11.03 (2026-11-19)
+
+## What's Changed
+* Fix Nginx warning for certificates without OCSP support by @carferrer in https://github.com/carferrer/vaultwarden-cfm/pull/36
+
+
+**Full Changelog**: https://github.com/carferrer/vaultwarden-cfm/compare/2026.11.02...2026.11.03
+
 # Versión 2026.11.02 (2026-11-19)
 
 ## What's Changed
